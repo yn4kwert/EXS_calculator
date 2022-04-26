@@ -9,9 +9,13 @@ from pumpCalc_window import Ui_PumpCalcWindow
 from about_window import Ui_AboutWindow
 
 import sys
+import pandas as pd
+
+
 flag = ''
 PASSWORD = '123'
 user = 'Технолог'
+
 class main_window(QtWidgets.QMainWindow):
 
 
@@ -84,7 +88,8 @@ class main_window(QtWidgets.QMainWindow):
         self.ui4.show()
         self.ui4.close_pumpCalc_window()
 
-
+'''This class is responsible for password input dialog box operation
+Description of this dialog box is implemented 'on place' and not imported from other modules'''
 class ClssDialog(QtWidgets.QDialog):
     #global PASSWORD
 
@@ -114,11 +119,13 @@ class ClssDialog(QtWidgets.QDialog):
         self.lineEdit.setGeometry(QtCore.QRect(70, 50, 351, 23))
         self.lineEdit.setObjectName("lineEdit")
 
+    '''This method describes what should happen if button Cancel is pressed'''
     def btnClosed(self):
         global flag
         self.close()
         flag = 'Canceled'
 
+    '''This method describes what should happen if button OK is pressed'''
     def btnOk(self):
         global flag
         if self.lineEdit.text() == PASSWORD:
@@ -133,53 +140,54 @@ class ClssDialog(QtWidgets.QDialog):
                                            buttons=QtWidgets.QMessageBox.Ok,
                                            parent=self)
             dialog.exec_()
-            #return ("Invalid Password")
-            '''Insert here error popup message'''
 
-
+'''This class fully describes behavior of the window "Constant window"'''
 class constant_window(QtWidgets.QMainWindow):
 
+    '''Design of constant window is created via QtDesigner and was transformed to .py file from .ui
+    Method init initialize this class from the constant_window.py module
+    AND put an image-logo from .png file (why .qrc?) I GUES IT SHOULD BE IMPLEMENTED AS A STAND ALONE METHOD for re-using
+    AND makes columns width expand in dependence of window width'''
     def __init__(self):
         super(constant_window, self).__init__()
         self.ui2 = Ui_CheckConstantWindow()
         self.ui2.setupUi(self)
+        '''Put a logo'''
         pixmap = QPixmap(':/images/logo.png')  # resource path starts with ':'
         self.ui2.putImageHere.setPixmap(pixmap)
         self.ui2.label_currentUser.setText(user)
-
-        # self.table = QtWidgets.QTableWidget(self.centralwidget)
-        # self.table.setObjectName("test table")
-        # self.table.setColumnCount(3)
-        # self.table.setRowCount(3)
-        # item = QtWidgets.QTableWidgetItem()
-        # self.table.setVerticalHeaderItem(0, item)
-        # item = QtWidgets.QTableWidgetItem()
-        # self.table.setVerticalHeaderItem(1, item)
-        # item = QtWidgets.QTableWidgetItem()
-        # self.table.setVerticalHeaderItem(2, item)
-        # item = QtWidgets.QTableWidgetItem()
-        # self.table.setHorizontalHeaderItem(0, item)
-        # item = QtWidgets.QTableWidgetItem()
-        # self.table.setHorizontalHeaderItem(1, item)
-        # item = QtWidgets.QTableWidgetItem()
-        # self.table.setHorizontalHeaderItem(2, item)
-        # self.button = QtWidgets.QPushButton()
-        # self.button.resize(200, 200)
-        # self.button.setText('but')
-        # self.ui2.tableWidget.setCellWidget(1, 1, self.button)
-
+        '''Expand columns' width'''
         self.ui2.tableWidgetMTHousing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.ui2.tableWidgetMTDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.ui2.tableWidgetMTLDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.ui2.tableWidgetMTBearing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.ui2.tableWidgetMTHB.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.ui2.tableWidgetMTHousing.setItem(1, 1, QtWidgets.QTableWidgetItem('123'))
+        self.ui2.pushButton.clicked.connect(self.upload_xlsx_file)
+        self.ui2.pushButton_hideMTHousing.clicked.connect(self.button_hide_clicked)
 
-
-
+    '''This method allows to hide Table widget by clicking Hide/Unhide button'''
+    def button_hide_clicked(self):
+        if self.ui2.pushButton_hideMTHousing.text() == 'Hide':
+            self.ui2.tableWidgetMTHousing.setVisible(False)
+            self.ui2.pushButton_hideMTHousing.setText('Unhide')
+        else:
+            self.ui2.tableWidgetMTHousing.setVisible(True)
+            self.ui2.pushButton_hideMTHousing.setText('Hide')
 
     def close_constant_window(self):
         self.ui2.pushButton_Close.clicked.connect(self.close)
         #self.ui2.pushButton_backToMainWindow.clicked.connect(self.show_main_window)
+    ''' This method allows to upload all cells values from xslx table to my program. I.e. initialize the table.
+    I guess, it's better to transform it into the func or to think how to reuse this method'''
+    def upload_xlsx_file(self):
+        xl = pd.read_excel('./MT_housing.xlsx', header=0, index_col=0)
+        #self.ui2.tableWidgetMTHousing.clear()
+        rows, cols = xl.shape
+        self.ui2.tableWidgetMTHousing.setRowCount(rows)
+        for row in range(rows):
+            for col in range(cols):
+                self.ui2.tableWidgetMTHousing.setItem(row, col, QtWidgets.QTableWidgetItem(str(xl.iloc[row][col])))
 
     # def show_main_window(self):
     #     self.ui = main_window()
@@ -223,6 +231,16 @@ class pumpCalc_window(QtWidgets.QMainWindow):
     #     self.ui = main_window()
     #     self.ui.show()
     #     self.ui.show_main_window()
+
+
+
+    # for item in xl:
+    #     print(xl[item])
+
+
+    # Load a sheet into a DataFrame by name: df1
+    #df1 = xl.parse('Sheet1')
+
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
