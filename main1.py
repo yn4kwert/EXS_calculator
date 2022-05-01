@@ -15,6 +15,7 @@ import pandas as pd
 flag = ''
 PASSWORD = '123'
 user = 'Технолог'
+MT_hidden = False
 
 class main_window(QtWidgets.QMainWindow):
 
@@ -142,16 +143,21 @@ class ClssDialog(QtWidgets.QDialog):
             dialog.exec_()
 
 '''This class fully describes behavior of the window "Constant window"'''
+
 class constant_window(QtWidgets.QMainWindow):
+
 
     '''Design of constant window is created via QtDesigner and was transformed to .py file from .ui
     Method init initialize this class from the constant_window.py module
     AND put an image-logo from .png file (why .qrc?) I GUES IT SHOULD BE IMPLEMENTED AS A STAND ALONE METHOD for re-using
     AND makes columns width expand in dependence of window width'''
     def __init__(self):
+        global MT_hidden
+
         super(constant_window, self).__init__()
         self.ui2 = Ui_CheckConstantWindow()
         self.ui2.setupUi(self)
+
         '''Put a logo'''
         pixmap = QPixmap(':/images/logo.png')  # resource path starts with ':'
         self.ui2.putImageHere.setPixmap(pixmap)
@@ -162,18 +168,68 @@ class constant_window(QtWidgets.QMainWindow):
         self.ui2.tableWidgetMTLDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.ui2.tableWidgetMTBearing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.ui2.tableWidgetMTHB.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui2.tableWidgetMTHousing.setItem(1, 1, QtWidgets.QTableWidgetItem('123'))
-        self.ui2.pushButton.clicked.connect(self.upload_xlsx_file)
-        self.ui2.pushButton_hideMTHousing.clicked.connect(self.button_hide_clicked)
 
-    '''This method allows to hide Table widget by clicking Hide/Unhide button'''
-    def button_hide_clicked(self):
-        if self.ui2.pushButton_hideMTHousing.text() == 'Hide':
-            self.ui2.tableWidgetMTHousing.setVisible(False)
-            self.ui2.pushButton_hideMTHousing.setText('Unhide')
+        self.ui2.pushButton_TPSLine.clicked.connect(self.hide_all_MT, MT_hidden)
+        self.ui2.pushButton_initTableMTHousing.clicked.connect(self.upload_xlsx_file)
+        #self.ui2.pushButton_hideMTHousing.clicked.connect(self.button_hide_clicked) #replaced with universal method ''button_hide2_clicked''
+
+        self.ui2.pushButton_hideMTHousing.clicked.connect(lambda checked, btn_name='MTHousing': self.button_hide2_clicked(btn_name))
+        self.ui2.pushButton_hideMTHB.clicked.connect(lambda checked, btn_name='MTHB': self.button_hide2_clicked(btn_name))
+        self.ui2.pushButton_hideMTDif.clicked.connect(lambda checked, btn_name='MTDif': self.button_hide2_clicked(btn_name))
+        self.ui2.pushButton_hideMTLDif.clicked.connect(lambda checked, btn_name='MTLDif': self.button_hide2_clicked(btn_name))
+        self.ui2.pushButton_hideMTBearing.clicked.connect(lambda checked, btn_name='MTBearing': self.button_hide2_clicked(btn_name))
+
+    def hide_all_MT(self):
+        global MT_hidden
+
+        self.ui2.tableWidgetMTHousing.setVisible(MT_hidden)
+        self.ui2.tableWidgetMTHB.setVisible(MT_hidden)
+        self.ui2.tableWidgetMTDif.setVisible(MT_hidden)
+        self.ui2.tableWidgetMTLDif.setVisible(MT_hidden)
+        self.ui2.tableWidgetMTBearing.setVisible(MT_hidden)
+
+        self.ui2.pushButton_hideMTHousing.setVisible(MT_hidden)
+        self.ui2.label_MT_Housing.setVisible(MT_hidden)
+        self.ui2.pushButton_initTableMTHousing.setVisible(MT_hidden)
+
+        self.ui2.pushButton_hideMTHB.setVisible(MT_hidden)
+        self.ui2.label_MT_HB.setVisible(MT_hidden)
+        self.ui2.pushButton_initTableMTHB.setVisible(MT_hidden)
+
+        self.ui2.pushButton_hideMTDif.setVisible(MT_hidden)
+        self.ui2.label_MT_Dif.setVisible(MT_hidden)
+        self.ui2.pushButton_initTableMTDif.setVisible(MT_hidden)
+
+        self.ui2.pushButton_hideMTLDif.setVisible(MT_hidden)
+        self.ui2.label_MT_LDif.setVisible(MT_hidden)
+        self.ui2.pushButton_initTableMTLDif.setVisible(MT_hidden)
+
+        self.ui2.pushButton_hideMTBearing.setVisible(MT_hidden)
+        self.ui2.label_MT_Bearing.setVisible(MT_hidden)
+        self.ui2.pushButton_initTableMTBearing.setVisible(MT_hidden)
+
+        MT_hidden = not MT_hidden
+
+    '''This method allows to hide Table widget of MT Housings by clicking Hide/Unhide button'''
+    # def button_hide_clicked(self):
+    #     if self.ui2.pushButton_hideMTHousing.text() == 'Hide':
+    #         self.ui2.tableWidgetMTHousing.setVisible(False)
+    #         self.ui2.pushButton_hideMTHousing.setText('Unhide')
+    #     else:
+    #         self.ui2.tableWidgetMTHousing.setVisible(True)
+    #         self.ui2.pushButton_hideMTHousing.setText('Hide')
+
+    '''This method allows to hide any Table widget dependantly on clicked button Hide/Unhide 
+    It is not safe to use eval() - needed to be replaced'''
+    def button_hide2_clicked(self, btn_name):
+        if eval('self.ui2.pushButton_hide'+btn_name+'.text()') == 'Hide':
+            eval('self.ui2.tableWidget'+btn_name+'.setVisible(False)')
+            eval('self.ui2.pushButton_hide'+btn_name+'.setText(\'Unhide\')')
         else:
-            self.ui2.tableWidgetMTHousing.setVisible(True)
-            self.ui2.pushButton_hideMTHousing.setText('Hide')
+            eval('self.ui2.tableWidget'+btn_name+'.setVisible(True)')
+            eval('self.ui2.pushButton_hide'+btn_name+'.setText(\'Hide\')')
+
+        # return(constant_window)
 
     def close_constant_window(self):
         self.ui2.pushButton_Close.clicked.connect(self.close)
