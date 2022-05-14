@@ -40,6 +40,21 @@ MT2A_BASE_LEN = 40
 MT2A_BASE_LEN_UP_DEV = 0.8
 MT2A_BASE_LEN_LOW_DEV = 0.8
 
+HOUSING_LENGTH_CODE = {
+    '#10': 450, '#20': 850, '#30': 1230,
+    '#40': 1555, '#50': 1930, '#60': 2210,
+    '#70': 2650, '#80': 2930, '#90': 3600,
+    '#100': 4000, '#110': 4590, '#120': 4950,
+    '#130': 5620, '#140': 6020, '#150': 7500,
+    '#160': 9000, '0.5' : 500, '1' : 1000,
+    '1.5': 1500, '2': 2000, '2.5': 2500,
+    '3' : 3000, '3.5': 3500, '4': 4000,
+    '4.5': 4500, '5': 5000, '5.5': 5500,
+    '6': 6000, '6.5': 6500, '7': 7000,
+    '7.5': 7500, '8': 8000, '8.5': 8500,
+    '9': 9000, '9.5': 9500, '10': 10000,
+    }
+
 '''
 class - CamelCase
 Method and func - lower_case_with_underscores or likeThatName
@@ -64,53 +79,48 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).__init__()
         self.ui_main = Ui_MainWindow()
         self.ui_main.setupUi(self)
+
+        self.put_a_logo(self.ui_main)
+        self.initMainWindowButtons()
+        # pixmap = QPixmap(':/images/logo.png')  # resource path starts with ':'
+        # self.ui_main.putImageHere.setPixmap(pixmap)
+
+    def put_a_logo(self, chosen_ui):
+        '''Puts a logo in left top corner of a window.'''
         pixmap = QPixmap(':/images/logo.png')  # resource path starts with ':'
-        self.ui_main.putImageHere.setPixmap(pixmap)
+        chosen_ui.putImageHere.setPixmap(pixmap)
 
-
-
-    def showMainWindow(self):
-        #self.ui.pushButton_chkConstValues.clicked.connect(self.close)
+    def initMainWindowButtons(self):
         self.ui_main.pushButtonChekConstValues.clicked.connect(self.showConstantWindow)
-        #self.ui.pushButton_pumpCalc.clicked.connect(self.close)
         self.ui_main.pushButtonPumpCalc.clicked.connect(self.showPumpCalcWindow)
-        #self.ui.pushButton_aboutProg.clicked.connect(self.close)
         self.ui_main.pushButtonAboutProg.clicked.connect(self.showAboutWindow)
-
         self.ui_main.pushButtonChiefTech.clicked.connect(self.changeUser)
 
     def showConstantWindow(self):
+        '''Create and show ConstantWindow'''
         self.ui = ConstantWindow()
         self.ui.show()
         self.ui.closeConstantWindow()
 
     def showAboutWindow(self):
-        print(user)
+        '''Create and show About Window'''
         self.ui = AboutWindow()
         self.ui.show()
         self.ui.closeAboutWindow()
 
     def showPumpCalcWindow(self):
+        '''Create and show PumpCalcWindow'''
         self.ui = PumpCalcWindow()
         self.ui.show()
         self.ui.closePumpCalcWindow()
 
     def changeUser(self):
-
+        '''checks flag value and changes current user label in MainWindow'''
         global user
         global flag
-        print('start')
-        # print(self.ui.labelCurrentUser.text())
-        if self.ui_main.labelCurrentUser.text() == 'Технолог': #Ломается тут
-            print('end')
-            #Было изначально:
-            # dialog = ClssDialog(self)
-            # dialog.exec_()
-
+        if self.ui_main.labelCurrentUser.text() == 'Технолог':
             self.dialog_password = ClssDialog()
             self.dialog_password.exec_()
-
-
             if flag == "Canceled":
                 print('Canceled')
             elif flag == "Empty":
@@ -123,32 +133,23 @@ class MainWindow(QtWidgets.QMainWindow):
                 user = 'Главный технолог'
                 self.ui_main.labelCurrentUser.setText('Главный технолог')
                 flag = "Empty"
-                # print(user)
-
             else:
-                print(flag)
-                print('smth went wrong when chek user flags')
-                 # print(user)
-
+                print('smth went wrong when chek user flags. Current flag: ', flag )
         elif self.ui_main.labelCurrentUser.text() == 'Главный технолог':
             user = 'Технолог'
             self.ui_main.labelCurrentUser.setText('Технолог')
-            # print(user)
         else:
-            print(flag)
-            print('smth went wrong. Wrong user type')
+            print('smth went wrong. Wrong user type. Current user: ', user)
 
-'''This class is responsible for password input dialog box operation
-Description of this dialog box is implemented 'on place' and not imported from other modules'''
+
 class ClssDialog(QtWidgets.QDialog):
-    #global PASSWORD
+    '''This class is responsible for password input dialog box operation
+    Description of this dialog box is implemented 'on place' and not imported from other modules'''
     global flag
-
 
     def __init__(self, parent=None):
         super(ClssDialog, self).__init__(parent)
         #зачем здесь параметры ClssDialog, self; parent=none; parent?
-
 
         self.setWindowTitle("Авторизация")
         self.resize(508, 114)
@@ -173,18 +174,15 @@ class ClssDialog(QtWidgets.QDialog):
         self.lineEditPassword = QtWidgets.QLineEdit(self)
         self.lineEditPassword.setGeometry(QtCore.QRect(70, 50, 351, 23))
         self.lineEditPassword.setEchoMode(QtWidgets.QLineEdit.Password)
-        #self.lineEditPassword.setObjectName("lineEdit")
 
-    '''This method describes what should happen if button Cancel is pressed'''
     def btnClosed(self):
-
+        '''This method describes what should happen if button Cancel is pressed in INputPassword window'''
         global flag
         flag = 'Canceled'
         self.close()
 
-    '''This method describes what should happen if button OK is pressed'''
     def btnOk(self):
-
+        '''This method describes what should happen if button OK is pressed in INputPassword window'''
         global flag
         if self.lineEditPassword.text() == PASSWORD:
             flag = 'Valid Password'
@@ -209,32 +207,54 @@ class ClssDialog(QtWidgets.QDialog):
         #     event.accept()
         # else:
         #     event.ignore()
-'''This class fully describes behavior of the window "Constant window"'''
 
-class ConstantWindow(QtWidgets.QMainWindow):
+
+class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, QtWidgets.QMainWindow):
+    '''This class fully describes behavior of the window "Constant window"'''
     ''' Need to:
     Implement a function to save and load data
     "Save Button"
     Validate inputs!
-    How to create new item
     Deleting items?
     '''
 
     '''Design of constant window is created via QtDesigner and was transformed to .py file from .ui
-    Method init initialize this class from the ConstantWindow.py module
-    AND put an image-logo from .png file (why .qrc?) I GUES IT SHOULD BE IMPLEMENTED AS A STAND ALONE METHOD for re-using
-    AND makes columns width expand in dependence of window width'''
+    Method __init__ initialize this class from the ConstantWindow.py module
+    AND put an image-logo from .png file (why .qrc?) I GUES IT SHOULD BE IMPLEMENTED AS A STAND ALONE METHOD for re-using'''
+    all_tables = []
+
     def __init__(self, parent=None):
         global MT_hidden
 
         super(ConstantWindow, self).__init__(parent)
         self.ui = Ui_CheckConstantWindow()
         self.ui.setupUi(self)
-
+        self.MT_content = [self.ui.tableWidgetMTHousing,
+                      self.ui.tableWidgetMTHB,
+                      self.ui.tableWidgetMTDif,
+                      self.ui.tableWidgetMTLDif,
+                      self.ui.tableWidgetMTBearing,
+                      self.ui.pushButtonHideMTHousing,
+                      self.ui.labelMTHousing,
+                      self.ui.pushButtonInitTableMTHousing,
+                      self.ui.pushButtonHideMTHB,
+                      self.ui.labelMTHB,
+                      self.ui.pushButtonInitTableMTHB,
+                      self.ui.pushButtonHideMTDif,
+                      self.ui.labelMTDif,
+                      self.ui.pushButtonInitTableMTDif,
+                      self.ui.pushButtonHideMTLDif,
+                      self.ui.labelMTLDif,
+                      self.ui.pushButtonInitTableMTLDif,
+                      self.ui.pushButtonHideMTBearing,
+                      self.ui.labelMTBearing,
+                      self.ui.pushButtonInitTableMTBearing
+                      ]
         '''Put a logo'''
-        #self.put_a_logo()
-        pixmap = QPixmap(':/images/logo.png')  # resource path starts with ':' #@staticmethod???
+        #self.put_a_logo(self, self.ui)             HOW TO INHERIT?
+        pixmap = QPixmap(':/images/logo.png')  # resource path starts with ':' #@staticmethod??? Mixin?
         self.ui.putImageHere.setPixmap(pixmap)
+
         self.ui.labelCurrentUser.setText(user)
         '''Expand columns' width'''
         self.expandColumnsWidth()
@@ -249,7 +269,7 @@ class ConstantWindow(QtWidgets.QMainWindow):
         self.ui.pushButtonSaveChanges.clicked.connect(self.btnSaveChangesClicked)
         self.ui.pushButtonAddItem.clicked.connect(self.showAddNewItemWindow)
         self.calculateAndBlockUneditableMTHousingTableValues()
-        self.ui.TestButton.clicked.connect(self.addNewItem)
+        #self.ui.TestButton.clicked.connect(self.addNewItem)
 
         self.setupHideButtons()
 
@@ -304,37 +324,44 @@ class ConstantWindow(QtWidgets.QMainWindow):
             lambda checked, btn_name='OtherBearing': self.buttonHide2Clicked(btn_name))
 
     def expandColumnsWidth(self):
-        self.ui.tableWidgetMTHousing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetMTDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetMTLDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetMTBearing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetMTHB.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        all_tables = self.ui.scrollAreaWidgetContents.findChildren(QtWidgets.QTableWidget)
+        self.all_tables = all_tables
+        for table in all_tables:
+            table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
-        self.ui.tableWidgetEZLineHousing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetEZLineDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetEZLineLDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetEZLineBearing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetEZLineHB.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-
-        self.ui.tableWidgetREDAHousing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetREDADif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetREDALDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetREDABearing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetREDAHB.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-
-        self.ui.tableWidgetOtherHousing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetOtherDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetOtherLDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetOtherBearing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.ui.tableWidgetOtherHB.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetMTHousing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetMTDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetMTLDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetMTBearing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetMTHB.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        #
+        # self.ui.tableWidgetEZLineHousing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetEZLineDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetEZLineLDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetEZLineBearing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetEZLineHB.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        #
+        # self.ui.tableWidgetREDAHousing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetREDADif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetREDALDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetREDABearing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetREDAHB.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        #
+        # self.ui.tableWidgetOtherHousing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetOtherDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetOtherLDif.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetOtherBearing.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.ui.tableWidgetOtherHB.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
     def showAddNewItemWindow(self):
         self.ui_new = NewItemWindow(self) #NewItemWindow(self) - ссылка на self как раз позволяет прицепить дочерний класс к родительскому. Т.е. у NewItemWindow - родитель self (constant_window)
         self.ui_new.open()
         self.ui_new.closeNewItemWindow()
 
-    '''This method performs calculation of MT housings working length and blocks calculated values for edit even for cheif technologist'''
     def calculateAndBlockUneditableMTHousingTableValues(self):
+        '''This method performs calculation of MT housings working length and blocks calculated
+         values for edit even for cheif technologist
+         NEED TO CORRECT THIS METHOD'''
         rows = self.ui.tableWidgetMTHousing.rowCount()
         #print(rows)
         for row in range(rows):
@@ -371,72 +398,79 @@ class ConstantWindow(QtWidgets.QMainWindow):
             item = self.ui.tableWidgetMTHousing.item(row, 9)
             item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
-    '''This method blocks TableWidgets in constant_window if current user is not chief technologist'''
     def disableTablesIfNotChiefTech(self):
+        '''This method blocks TableWidgets and hides some buttons
+         in constant_window if current user is not chief technologist'''
+        for table in self.all_tables:
+            table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
-        self.ui.tableWidgetMTHousing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetMTHB.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetMTDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetMTLDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetMTBearing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-
-        self.ui.tableWidgetEZLineHousing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetEZLineHB.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetEZLineDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetEZLineLDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetEZLineBearing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-
-        self.ui.tableWidgetREDAHousing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetREDAHB.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetREDADif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetREDALDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetREDABearing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-
-        self.ui.tableWidgetOtherHousing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetOtherHB.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetOtherDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetOtherLDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ui.tableWidgetOtherBearing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetMTHousing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetMTHB.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetMTDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetMTLDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetMTBearing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        #
+        # self.ui.tableWidgetEZLineHousing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetEZLineHB.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetEZLineDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetEZLineLDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetEZLineBearing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        #
+        # self.ui.tableWidgetREDAHousing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetREDAHB.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetREDADif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetREDALDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetREDABearing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        #
+        # self.ui.tableWidgetOtherHousing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetOtherHB.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetOtherDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetOtherLDif.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.ui.tableWidgetOtherBearing.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         self.ui.pushButtonAddItem.hide()
         self.ui.pushButtonSaveChanges.hide()
 
-    '''This method allows to hide all data about MT equipment by clicking TPS-line nameline 
-    I changed it from if-else statement, but this invoked a bug: when hide a single TabWidget and clicking TPS-line nameline twice,
-    TabWidget becomes visible with button labeled "Unhide" 
-    NEED TO FIX IT'''
     def hideAllMT(self):
+        '''This method allows to hide all data about MT equipment by clicking TPS-line nameline (button)
+        I changed it from if-else statement, but this invoked a bug: when hide a single TabWidget and clicking TPS-line nameline twice,
+        TabWidget becomes visible with button labeled "Unhide"
+        NEED TO FIX IT -- button 'hide/unhide' will be removed and replaced by button with name of item type '''
         global MT_hidden
-
-        self.ui.tableWidgetMTHousing.setVisible(MT_hidden)
-        self.ui.tableWidgetMTHB.setVisible(MT_hidden)
-        self.ui.tableWidgetMTDif.setVisible(MT_hidden)
-        self.ui.tableWidgetMTLDif.setVisible(MT_hidden)
-        self.ui.tableWidgetMTBearing.setVisible(MT_hidden)
-
-        self.ui.pushButtonHideMTHousing.setVisible(MT_hidden)
-        self.ui.labelMTHousing.setVisible(MT_hidden)
-        self.ui.pushButtonInitTableMTHousing.setVisible(MT_hidden)
-
-        self.ui.pushButtonHideMTHB.setVisible(MT_hidden)
-        self.ui.labelMTHB.setVisible(MT_hidden)
-        self.ui.pushButtonInitTableMTHB.setVisible(MT_hidden)
-
-        self.ui.pushButtonHideMTDif.setVisible(MT_hidden)
-        self.ui.labelMTDif.setVisible(MT_hidden)
-        self.ui.pushButtonInitTableMTDif.setVisible(MT_hidden)
-
-        self.ui.pushButtonHideMTLDif.setVisible(MT_hidden)
-        self.ui.labelMTLDif.setVisible(MT_hidden)
-        self.ui.pushButtonInitTableMTLDif.setVisible(MT_hidden)
-
-        self.ui.pushButtonHideMTBearing.setVisible(MT_hidden)
-        self.ui.labelMTBearing.setVisible(MT_hidden)
-        self.ui.pushButtonInitTableMTBearing.setVisible(MT_hidden)
-
+        for content_element in self.MT_content:
+                content_element.setVisible(MT_hidden)
+        # self.ui.tableWidgetMTHousing.setVisible(MT_hidden)
+        # self.ui.tableWidgetMTHB.setVisible(MT_hidden)
+        # self.ui.tableWidgetMTDif.setVisible(MT_hidden)
+        # self.ui.tableWidgetMTLDif.setVisible(MT_hidden)
+        # self.ui.tableWidgetMTBearing.setVisible(MT_hidden)
+        #
+        # self.ui.pushButtonHideMTHousing.setVisible(MT_hidden)
+        # self.ui.labelMTHousing.setVisible(MT_hidden)
+        # self.ui.pushButtonInitTableMTHousing.setVisible(MT_hidden)
+        #
+        # self.ui.pushButtonHideMTHB.setVisible(MT_hidden)
+        # self.ui.labelMTHB.setVisible(MT_hidden)
+        # self.ui.pushButtonInitTableMTHB.setVisible(MT_hidden)
+        #
+        # self.ui.pushButtonHideMTDif.setVisible(MT_hidden)
+        # self.ui.labelMTDif.setVisible(MT_hidden)
+        # self.ui.pushButtonInitTableMTDif.setVisible(MT_hidden)
+        #
+        # self.ui.pushButtonHideMTLDif.setVisible(MT_hidden)
+        # self.ui.labelMTLDif.setVisible(MT_hidden)
+        # self.ui.pushButtonInitTableMTLDif.setVisible(MT_hidden)
+        #
+        # self.ui.pushButtonHideMTBearing.setVisible(MT_hidden)
+        # self.ui.labelMTBearing.setVisible(MT_hidden)
+        # self.ui.pushButtonInitTableMTBearing.setVisible(MT_hidden)
         MT_hidden = not MT_hidden
 
     def hideAllEZLine(self):
+        '''hides all EZLine content
+        I'm not sure if it is necessary to do like hideAllMT or how to do it in another way.
+        Also, not sure if it is necessary to merge this 4 similar methods in one (gues, it's likely) and
+        how to implement it without "eval"'''
         global EZLine_hidden
 
         self.ui.tableWidgetEZLineHousing.setVisible(EZLine_hidden)
@@ -468,6 +502,7 @@ class ConstantWindow(QtWidgets.QMainWindow):
         EZLine_hidden = not EZLine_hidden
 
     def hideAllREDA(self):
+        '''hides all REDA content'''
         global REDA_hidden
 
         self.ui.tableWidgetREDAHousing.setVisible(REDA_hidden)
@@ -499,6 +534,7 @@ class ConstantWindow(QtWidgets.QMainWindow):
         REDA_hidden = not REDA_hidden
 
     def hideAllOther(self):
+        '''hides all Other PL content'''
         global Other_hidden
 
         self.ui.tableWidgetOtherHousing.setVisible(Other_hidden)
@@ -529,8 +565,8 @@ class ConstantWindow(QtWidgets.QMainWindow):
 
         Other_hidden = not Other_hidden
 
-    '''This method allows to hide Table widget of MT Housings by clicking Hide/Unhide button'''
     # def button_hide_clicked(self):
+    #'''This method allows to hide Table widget of MT Housings by clicking Hide/Unhide button'''
     #     if self.ui.pushButtonHideMTHousing.text() == 'Hide':
     #         self.ui.tableWidgetMTHousing.setVisible(False)
     #         self.ui.pushButtonHideMTHousing.setText('Unhide')
@@ -538,9 +574,9 @@ class ConstantWindow(QtWidgets.QMainWindow):
     #         self.ui.tableWidgetMTHousing.setVisible(True)
     #         self.ui.pushButtonHideMTHousing.setText('Hide')
 
-    '''This method allows to hide any Table widget dependantly on clicked button Hide/Unhide 
-    It is not safe to use eval() - needed to be replaced'''
     def buttonHide2Clicked(self, btn_name):
+        '''This method allows to hide any Table widget dependantly on clicked button Hide/Unhide
+        It is not safe to use eval() - needed to be replaced'''
         if eval('self.ui.pushButtonHide'+btn_name+'.text()') == 'Hide':
             eval('self.ui.tableWidget'+btn_name+'.setVisible(False)')
             eval('self.ui.pushButtonHide'+btn_name+'.setText(\'Unhide\')')
@@ -551,9 +587,10 @@ class ConstantWindow(QtWidgets.QMainWindow):
     def closeConstantWindow(self):
         self.ui.pushButtonClose.clicked.connect(self.close)
         #self.ui.pushButton_backToMainWindow.clicked.connect(self.showMainWindow)
-    ''' This method allows to upload all cells values from xslx table to my program. I.e. initialize the table.
-    I guess, it's better to transform it into the func or to think how to reuse this method'''
+
     def upload_xlsx_file(self):
+        ''' This method allows to upload all cells values from xslx table to program. I.e. initialize the table.
+        I guess, it's better to transform it into the func or to think how to reuse this method'''
         self.ui.tableWidgetMTHousing.clearContents()
         xl = pd.read_excel('./MT_housing.xlsx', header=0, index_col=0)
         #self.ui.tableWidgetMTHousing.clear()
@@ -566,7 +603,16 @@ class ConstantWindow(QtWidgets.QMainWindow):
 
     def btnSaveChangesClicked(self):
         '''This method should save all changes to the memory'''
-        pass
+        for table in self.all_tables:
+            data_name = str(table.objectName())[11:]
+            rows = table.rowCount()
+            cols = table.columnCount()
+            print(rows, cols, data_name)
+            for row in range(rows):
+                for col in range(cols):
+                    print(row, col, table.item(row, col).text())
+
+
     # def showMainWindow(self):
     #     self.ui = MainWindow()
     #     self.ui.show()
@@ -576,101 +622,140 @@ class ConstantWindow(QtWidgets.QMainWindow):
     #     print('herer')
     #     x = self.ui.tableWidgetMTHousing.rowCount()
     #     print(x)
-    def addNewItem(self, new_item_product_line, new_item_type, new_item_data=[]):
+    def addNewRow(self, table):
+        '''This method add new empty row to the "table"'''
+        row_position = table.rowCount()
+        table.insertRow(row_position)
+        return row_position
+
+    def fillFirst6Cols(self, table, row_position, data_to_save, new_item_product_line):
+        '''This method fills in first 6 cols values in "row_position"  in "table" '''
+        table.setItem(row_position, 0, QtWidgets.QTableWidgetItem(new_item_product_line))
+        table.setItem(row_position, 1, QtWidgets.QTableWidgetItem(data_to_save[0]))
+        table.setItem(row_position, 2, QtWidgets.QTableWidgetItem(data_to_save[1]))
+        table.setItem(row_position, 3, QtWidgets.QTableWidgetItem(data_to_save[2]))
+        table.setItem(row_position, 4, QtWidgets.QTableWidgetItem(data_to_save[3]))
+        table.setItem(row_position, 5, QtWidgets.QTableWidgetItem(data_to_save[4]))
+
+    def fillHousingTable(self, table, new_item_product_line, data_to_save):
+        '''This method fills in Housing table of chosen product line'''
+        row_position = self.addNewRow(table)
+        table.setItem(row_position, 0, QtWidgets.QTableWidgetItem(new_item_product_line))
+        table.setItem(row_position, 1, QtWidgets.QTableWidgetItem(data_to_save[0]))
+        table.setItem(row_position, 2, QtWidgets.QTableWidgetItem(data_to_save[1]))
+        table.setItem(row_position, 3, QtWidgets.QTableWidgetItem(data_to_save[2]))
+        table.setItem(row_position, 4, QtWidgets.QTableWidgetItem(str(HOUSING_LENGTH_CODE[data_to_save[2]])))
+        table.setItem(row_position, 5, QtWidgets.QTableWidgetItem(data_to_save[3]))
+        table.setItem(row_position, 6, QtWidgets.QTableWidgetItem(data_to_save[4]))
+        table.setItem(row_position, 7, QtWidgets.QTableWidgetItem('Calculate!')) #Рабочая номинальная
+        table.setItem(row_position, 8, QtWidgets.QTableWidgetItem('Calculate!')) #Раб макс
+        table.setItem(row_position, 9, QtWidgets.QTableWidgetItem('Calculate!')) #Раб мин
+
+    def fillDifTable(self, table, new_item_product_line, data_to_save):
+        '''This method fills in Diffuser table of chosen product line'''
+        row_position = self.addNewRow(table)
+        self.fillFirst6Cols(table, row_position, data_to_save, new_item_product_line)
+        table.setItem(row_position, 6, QtWidgets.QTableWidgetItem(data_to_save[5]))
+        table.setItem(row_position, 7, QtWidgets.QTableWidgetItem(data_to_save[6]))
+
+    def fillLDifTable(self, table, new_item_product_line, data_to_save):
+        '''This method fills in Lower Diffuser table of chosen product line'''
+        row_position = self.addNewRow(table)
+        self.fillFirst6Cols(table, row_position, data_to_save, new_item_product_line)
+
+    def fillBearingTable(self, table, new_item_product_line, data_to_save):
+        '''This method fills in Bearing table of chosen product line'''
+        row_position = self.addNewRow(table)
+        self.fillFirst6Cols(table, row_position, data_to_save, new_item_product_line)
+        table.setItem(row_position, 6, QtWidgets.QTableWidgetItem(data_to_save[5]))
+        table.setItem(row_position, 7, QtWidgets.QTableWidgetItem(data_to_save[6]))
+
+    def fillHBTable(self, table, new_item_product_line, data_to_save):
+        '''This method fills in Head&Base table of chosen product line'''
+        row_position = self.addNewRow(table)
+        self.fillFirst6Cols(table, row_position, data_to_save, new_item_product_line)
+        table.setItem(row_position, 6, QtWidgets.QTableWidgetItem(data_to_save[5]))
+
+    def addNewItem(self, new_item_product_line, new_item_type, data_to_save):
+        '''This method choose neccessary table for new Item and fills chosen table with transmitted data'''
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         #Как это реализовать? Через условия? Через eval? Через словари?
         #[MT, EZLine, REDA, Other]
         #[Housing, Dif, LDif, Bearing, HB]
-        print(new_item_product_line, new_item_type)
+        print(new_item_product_line, new_item_type, data_to_save)
+        if new_item_product_line == 'TPS-Line':
+            if new_item_type == 'Корпус':
+                self.fillHousingTable(self.ui.tableWidgetMTHousing, new_item_product_line, data_to_save)
+            elif new_item_type == 'Направляющий аппарат':
+                self.fillDifTable(self.ui.tableWidgetMTDif, new_item_product_line, data_to_save)
 
-        if new_item_product_line == 'MT':
-            if new_item_type == 'Housing':
-                pass
-                #[combo1,line1,combo3,combo4/5, -, line2,line3, - - -]
-                # row_position = self.ui.tableWidgetMTHousing.rowCount()
-                # self.ui.tableWidgetMTHousing.insertRow(row_position)
-                # self.ui_main.tableWidgetMTHousing.setItem(row_position, 0, QtWidgets.QTableWidgetItem(new_item_data[0]))
-                # self.ui_main.tableWidgetMTHousing.setItem(row_position, 1, QtWidgets.QTableWidgetItem(new_item_data[1]))
-                # self.ui_main.tableWidgetMTHousing.setItem(row_position, 2, QtWidgets.QTableWidgetItem(new_item_data[2]))
-                # self.ui_main.tableWidgetMTHousing.setItem(row_position, 3, QtWidgets.QTableWidgetItem(new_item_data[3]))
-                # self.ui_main.tableWidgetMTHousing.setItem(row_position, 4, QtWidgets.QTableWidgetItem(new_item_data[4]))
+            elif new_item_type == 'Нижний направляющий аппарат':
+                self.fillLDifTable(self.ui.tableWidgetMTLDif, new_item_product_line, data_to_save)
 
-            elif new_item_type == 'Dif':
-                pass
-
-            elif new_item_type == 'LDif':
-                pass
-
-            elif new_item_type == 'Bearing':
-                pass
+            elif new_item_type == 'Подшипник':
+                self.fillBearingTable(self.ui.tableWidgetMTBearing, new_item_product_line, data_to_save)
 
             else: #head&base
-                pass
+                self.fillHBTable(self.ui.tableWidgetMTHB, new_item_product_line, data_to_save)
 
         elif new_item_product_line == 'EZLine':
-            if new_item_type == 'Housing':
-                pass
+            if new_item_type == 'Корпус':
+                self.fillHousingTable(self.ui.tableWidgetEZLineHousing, new_item_product_line, data_to_save)
 
-            elif new_item_type == 'Dif':
-                pass
+            elif new_item_type == 'Направляющий аппарат':
+                self.fillDifTable(self.ui.tableWidgetEZLineDif, new_item_product_line, data_to_save)
 
-            elif new_item_type == 'LDif':
-                pass
+            elif new_item_type == 'Нижний направляющий аппарат':
+                self.fillLDifTable(self.ui.tableWidgetEZLineLDif, new_item_product_line, data_to_save)
 
-            elif new_item_type == 'Bearing':
-                pass
+            elif new_item_type == 'Подшипник':
+                self.fillBearingTable(self.ui.tableWidgetEZLineBearing, new_item_product_line, data_to_save)
 
             else:  # head&base
-                pass
+                self.fillHBTable(self.ui.tableWidgetEZLineHB, new_item_product_line, data_to_save)
 
         elif new_item_product_line == 'REDA':
-            if new_item_type == 'Housing':
-                pass
+            if new_item_type == 'Корпус':
+                self.fillHousingTable(self.ui.tableWidgetREDAHousing, new_item_product_line, data_to_save)
 
-            elif new_item_type == 'Dif':
-                pass
+            elif new_item_type == 'Направляющий аппарат':
+                self.fillDifTable(self.ui.tableWidgetREDADif, new_item_product_line, data_to_save)
 
-            elif new_item_type == 'LDif':
-                pass
+            elif new_item_type == 'Нижний направляющий аппарат':
+                self.fillLDifTable(self.ui.tableWidgetREDALDif, new_item_product_line, data_to_save)
 
-            elif new_item_type == 'Bearing':
-                pass
-
-            else:  # head&base
-                pass
-
-        elif new_item_product_line == 'Other':
-            if new_item_type == 'Housing':
-                pass
-
-            elif new_item_type == 'Dif':
-                pass
-
-            elif new_item_type == 'LDif':
-                pass
-
-            elif new_item_type == 'Bearing':
-                pass
+            elif new_item_type == 'Подшипник':
+                self.fillBearingTable(self.ui.tableWidgetREDABearing, new_item_product_line, data_to_save)
 
             else:  # head&base
-                pass
-        '''Здесь нужно в зависимости от типа добавляемой детали - выбирать таблицу для добавления.'''
-        # row_position = self.ui.tableWidgetMTHousing.rowCount()
-        # self.ui.tableWidgetMTHousing.insertRow(row_position)
-        # self.ui_main.tableWidget.setItem(row_position, 0, QtWidgets.QTableWidgetItem(new_item_data[0]))
-        # self.ui_main.tableWidget.setItem(row_position, 1, QtWidgets.QTableWidgetItem(new_item_data[1]))
-        # self.ui_main.tableWidget.setItem(row_position, 2, QtWidgets.QTableWidgetItem(new_item_data[2]))
-        # self.ui_main.tableWidget.setItem(row_position, 3, QtWidgets.QTableWidgetItem(new_item_data[3]))
-        # self.ui_main.tableWidget.setItem(row_position, 4, QtWidgets.QTableWidgetItem(new_item_data[4]))
+                self.fillHBTable(self.ui.tableWidgetREDAHB, new_item_product_line, data_to_save)
 
-'''Нужно добавть очистку данных при изменении типа деталей'''
+        elif new_item_product_line == 'другое':
+            if new_item_type == 'Корпус':
+                self.fillHousingTable(self.ui.tableWidgetOtherHousing, new_item_product_line, data_to_save)
+
+            elif new_item_type == 'Направляющий аппарат':
+                self.fillDifTable(self.ui.tableWidgetOtherDif, new_item_product_line, data_to_save)
+
+            elif new_item_type == 'Нижний направляющий аппарат':
+                self.fillLDifTable(self.ui.tableWidgetOtherLDif, new_item_product_line, data_to_save)
+
+            elif new_item_type == 'Подшипник':
+                self.fillBearingTable(self.ui.tableWidgetOtherBearing, new_item_product_line, data_to_save)
+
+            else:  # head&base
+                self.fillHBTable(self.ui.tableWidgetOtherHB, new_item_product_line, data_to_save)
+        else:
+                print('New ProductLine?')
+
+
 class NewItemWindow(QtWidgets.QDialog):
+    '''Describes behaviour of NewItemWindow'''
     chosen_product_line = ''
     comboBoxItemType_activated = False
     def __init__(self, parent=None):
         super(NewItemWindow, self).__init__(parent)
         self.parent = parent
-        #print(self.parent, parent)
         self.ui_new = Ui_DialogCreateNewItem()
         self.ui_new.setupUi(self)
 
@@ -679,16 +764,19 @@ class NewItemWindow(QtWidgets.QDialog):
 
         self.ui_new.labelItemParameters.hide()
 
-
         self.hideAllParameters()
         self.ui_new.comboBoxProductLine.currentTextChanged.connect(self.checkProductLine)
         self.ui_new.comboBoxItemType.currentTextChanged.connect(self.checkItemType)
 
-        #self.ui_new.pushButtonSave.clicked.connect(self.saveNewItem)
-    '''Hides all lineEdits, comboBoxes and labels for new item parameters'''
-    '''Как скрыть все элементы по нормальному?'''
-    '''Запихнуть в контейнер?Написать функцию на строку из булевых значений?'''
+        self.ui_new.pushButtonSave.clicked.connect(self.collectNewItemParamVals)
+        '''Hides all lineEdits, comboBoxes and labels for new item parameters'''
+        '''Как скрыть все элементы по нормальному?'''
+        '''Запихнуть в контейнер?Написать функцию на строку из булевых значений?'''
+        # all_QLineEdits = self.ui_new.findChildren(QtWidgets.QLabel) #Почему не работает?
+        # print(all_QLineEdits)
+
     def hideAllParameters(self):
+        '''This method hides all labels, comboboxes and linedits'''
         self.ui_new.labelSeriesRus.hide()
         self.ui_new.comboBoxSeriesRus.hide()
         self.ui_new.labelSeriesEng.hide()
@@ -721,10 +809,63 @@ class NewItemWindow(QtWidgets.QDialog):
         self.ui_new.lineEditBearingMod.hide()
 
     def closeNewItemWindow(self):
+        '''Defines what to do on close button push'''
         self.ui_new.pushButtonCancel.clicked.connect(self.close)
 
+    def checkNoEmptyValues(self, list):
+        '''CHecks that all available blanks don't have empty vals'''
+        if '' not in list:
+            return True
+        else:
+            return False
 
-    '''def saveNewItem(self):
+    def collectNewItemParamVals(self):
+        '''Collects all values from available comboBoxes and lineEdits and pass data to constant_window.
+        It also will raise an error message if there any missing data'''
+        new_item_product_line = self.ui_new.comboBoxProductLine.currentText()
+        new_item_type = self.ui_new.comboBoxItemType.currentText()
+        data_to_save = []
+        #-----------------------------------------------------------------------
+        '''all_QLineEdits = self.ui_new.findChildren(QtWidgets.QLineEdit)
+        print(all_QLineEdits)''' #Почему не работает?!
+        # for item in all_QLineEdits:
+        #     print(item)
+            # if item.isVisible():
+            #     line_edits.append(f'{item.text()}')
+        #-----------------------------------------------------------------------
+        param_properties = [
+                                self.ui_new.comboBoxSeriesRus,
+                                self.ui_new.comboBoxSeriesEng,
+                                self.ui_new.comboBoxHorB,
+                                self.ui_new.lineEditStagSize,
+                                self.ui_new.lineEditCompression,
+                                self.ui_new.comboBoxCRFL,
+                                self.ui_new.comboBoxLengthCodeRus,
+                                self.ui_new.comboBoxLengthCodeEng,
+                                self.ui_new.lineEditHeight,
+                                self.ui_new.lineEditUpDev,
+                                self.ui_new.lineEditLowDev,
+                                self.ui_new.comboBoxBearingImp,
+                                self.ui_new.lineEditBearingMod
+                            ]#или в __init__ его?
+        for param in param_properties:
+            if param.isVisible():
+                if isinstance(param, QtWidgets.QLineEdit):
+                    data_to_save.append(f'{param.text()}')
+                else:
+                    data_to_save.append(f'{param.currentText()}')
+        if self.checkNoEmptyValues(data_to_save):
+            self.close()
+            self.parent.addNewItem(new_item_product_line, new_item_type, data_to_save)
+        else:
+            dialog = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical,
+                                           "Пустые значения",
+                                           "Не все необходимые поля заполнены",
+                                           buttons=QtWidgets.QMessageBox.Ok,
+                                           parent=self)
+            dialog.exec_()
+
+        '''def collectNewItemParamVals(self):
         print('hi')
         new_item_product_line = self.ui_new.comboBoxProductLine.currentText()
         new_item_type = self.ui_new.comboBoxItemType.currentText()
@@ -763,8 +904,8 @@ class NewItemWindow(QtWidgets.QDialog):
         self.close()
         self.parent.addNewItem(new_item_product_type, new_item_type)'''
 
-    '''This method changes color design of the NewItemWindow dependantly on chosen product line'''
     def changeWindowColor(self, chosen_product_line):
+        '''This method changes color design of the NewItemWindow dependantly on chosen product line'''
         #self.ui_new.DialogCreateNewItem.setStyleSheet("background-color: rgb(255, 220, 220);") Почему не работает?
         #print(self.checkProductLine.chosen_product_line) Почему не работает?
         if chosen_product_line == 'TPS-Line':
@@ -799,11 +940,9 @@ class NewItemWindow(QtWidgets.QDialog):
         self.ui_new.labelItemType.setStyleSheet(label_style)
         self.ui_new.labelItemParameters.setStyleSheet(label_style)
 
-
     def checkProductLine(self):
+        ''' Checks chosen product line and hides all fields, if no product line is chosen and shows ItemTypeBoxes'''
         print(self.comboBoxItemType_activated)
-
-
         chosen_product_line = self.ui_new.comboBoxProductLine.currentText()
         self.changeWindowColor(chosen_product_line)
         if chosen_product_line == '':
@@ -815,16 +954,26 @@ class NewItemWindow(QtWidgets.QDialog):
             self.chosen_product_line = chosen_product_line #for conditional branch in checkItemType
             self.ui_new.labelItemType.show()
             self.ui_new.comboBoxItemType.show()
-            print(1234)
+
             '''This condition is written for not showing spare part specific labels/lineEdits and comboBoxes when changing 
             product line comboBox value when comboBoxItemType is not activated yet and for changing spare part specific 
             labels/lineEdits and comboBoxes when comboBoxItemType is activated'''
             if self.comboBoxItemType_activated == True:
                 self.checkItemType()
 
+    def clearLineEditFields(self):
+        '''clears all lineEdit's data in NewItemWindow'''
+        self.ui_new.lineEditStagSize.setText('')
+        self.ui_new.lineEditCompression.setText('')
+        self.ui_new.lineEditHeight.setText('')
+        self.ui_new.lineEditUpDev.setText('')
+        self.ui_new.lineEditLowDev.setText('')
+        self.ui_new.lineEditBearingMod.setText('')
 
     def checkItemType(self):
+        '''checks chosen item type and shows corresponding fields and labels of item parameters'''
         self.comboBoxItemType_activated = True
+        self.clearLineEditFields()
         chosen_item_type = self.ui_new.comboBoxItemType.currentText()
         self.ui_new.labelItemParameters.show()
         #ДНФ, КНФ?
@@ -832,8 +981,7 @@ class NewItemWindow(QtWidgets.QDialog):
         self.ui_new.lineEditUpDev.show()
         self.ui_new.labelLowDev.show()
         self.ui_new.lineEditLowDev.show()
-
-        '''скрывает-показывает нужные поля label/lineEdit/comboBox в зависимости от выбранной детали'''
+        '''Условние ветвление скрывает-показывает нужные поля label/lineEdit/comboBox в зависимости от выбранной детали'''
         '''Переписать по нормальному!'''
         if chosen_item_type == 'Корпус':
             if self.chosen_product_line == 'REDA' or self.chosen_product_line == 'EZLine':
@@ -1007,6 +1155,7 @@ class AboutWindow(QtWidgets.QMainWindow):
     #     self.ui.show()
     #     self.ui.showMainWindow()
 
+
 class PumpCalcWindow(QtWidgets.QMainWindow):#QtWidgets.QMainWindow):
 
     def __init__(self):
@@ -1045,6 +1194,6 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     w = MainWindow()
     w.show()
-    w.showMainWindow()
+    #w.showMainWindow()
     #w.back_to_main_window()
     sys.exit(app.exec_())
