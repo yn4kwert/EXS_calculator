@@ -72,6 +72,8 @@ Method and func - lower_case_with_underscores or likeThatName
 #         self.ui.putImageHere.setPixmap(pixmap)
 #         self.ui.labelCurrentUser.setText(user)
 
+class PutLogo():
+    pass
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -212,16 +214,20 @@ class ClssDialog(QtWidgets.QDialog):
 class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, QtWidgets.QMainWindow):
     '''This class fully describes behavior of the window "Constant window"'''
     ''' Need to:
-    Implement a function to save and load data
-    "Save Button"
-    Validate inputs!
-    Deleting items?
+    Improve a function to save and load data!
+   
+    Right-click menu:
+                    Delete item
+                    Edit item (open AddNewItemWindow)
+                    Recalculate current row
+                    smthg else?
     '''
 
     '''Design of constant window is created via QtDesigner and was transformed to .py file from .ui
     Method __init__ initialize this class from the ConstantWindow.py module
     AND put an image-logo from .png file (why .qrc?) I GUES IT SHOULD BE IMPLEMENTED AS A STAND ALONE METHOD for re-using'''
     all_tables = []
+    incorrect_HB_data = dict()
 
     def __init__(self, parent=None):
         global MT_hidden
@@ -230,46 +236,50 @@ class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, Q
         self.ui = Ui_CheckConstantWindow()
         self.ui.setupUi(self)
         self.MT_content = [self.ui.tableWidgetMTHousing,
-                      self.ui.tableWidgetMTHB,
-                      self.ui.tableWidgetMTDif,
-                      self.ui.tableWidgetMTLDif,
-                      self.ui.tableWidgetMTBearing,
-                      self.ui.pushButtonHideMTHousing,
-                      self.ui.labelMTHousing,
-                      self.ui.pushButtonInitTableMTHousing,
-                      self.ui.pushButtonHideMTHB,
-                      self.ui.labelMTHB,
-                      self.ui.pushButtonInitTableMTHB,
-                      self.ui.pushButtonHideMTDif,
-                      self.ui.labelMTDif,
-                      self.ui.pushButtonInitTableMTDif,
-                      self.ui.pushButtonHideMTLDif,
-                      self.ui.labelMTLDif,
-                      self.ui.pushButtonInitTableMTLDif,
-                      self.ui.pushButtonHideMTBearing,
-                      self.ui.labelMTBearing,
-                      self.ui.pushButtonInitTableMTBearing
-                      ]
+                           self.ui.tableWidgetMTHB,
+                           self.ui.tableWidgetMTDif,
+                           self.ui.tableWidgetMTLDif,
+                           self.ui.tableWidgetMTBearing,
+                           self.ui.pushButtonHideMTHousing,
+                           self.ui.labelMTHousing,
+                           self.ui.pushButtonInitTableMTHousing,
+                           self.ui.pushButtonHideMTHB,
+                           self.ui.labelMTHB,
+                           self.ui.pushButtonInitTableMTHB,
+                           self.ui.pushButtonHideMTDif,
+                           self.ui.labelMTDif,
+                           self.ui.pushButtonInitTableMTDif,
+                           self.ui.pushButtonHideMTLDif,
+                           self.ui.labelMTLDif,
+                           self.ui.pushButtonInitTableMTLDif,
+                           self.ui.pushButtonHideMTBearing,
+                           self.ui.labelMTBearing,
+                           self.ui.pushButtonInitTableMTBearing
+        ]
         '''Put a logo'''
         #self.put_a_logo(self, self.ui)             HOW TO INHERIT?
         pixmap = QPixmap(':/images/logo.png')  # resource path starts with ':' #@staticmethod??? Mixin?
         self.ui.putImageHere.setPixmap(pixmap)
 
         self.ui.labelCurrentUser.setText(user)
-        '''Expand columns' width'''
         self.expandColumnsWidth()
+        self.clearTablesData() #after self.expandColumnsWidth!
+        self.loadTablesData()
         '''UNCOMMENT THIS when releasing the program
         vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv'''
         # if user != 'Главный технолог':
         #     self.disableTablesIfNotChiefTech()
+        # else:
+        #     self.blockUneditableTablesVals()
         '''^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'''
         self.ui.pushButtonInitTableMTHousing.clicked.connect(self.upload_xlsx_file)
+        self.ui.pushButtonRecalculate.clicked.connect(self.recalculateAllHousingLengthsValues)
         #self.ui.pushButtonHideMTHousing.clicked.connect(self.button_hide_clicked) #replaced with universal method ''buttonHide2Clicked''
 
         self.ui.pushButtonSaveChanges.clicked.connect(self.btnSaveChangesClicked)
         self.ui.pushButtonAddItem.clicked.connect(self.showAddNewItemWindow)
         self.calculateAndBlockUneditableMTHousingTableValues()
-        #self.ui.TestButton.clicked.connect(self.addNewItem)
+        self.ui.TestButton.clicked.connect(self.blockUneditableTablesVals)
 
         self.setupHideButtons()
 
@@ -358,6 +368,138 @@ class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, Q
         self.ui_new.open()
         self.ui_new.closeNewItemWindow()
 
+    def recalculateAllHousingLengthsValues(self):
+        '''Recalculates work length values in housing-tables'''
+        self.incorrect_HB_data.clear()
+        for table in self.all_tables[::5]:
+            HB_table = getattr(self.ui, table.objectName()[:-6] + 'B', 'Check names of Housing and HB tables!!!')
+            rows = table.rowCount()
+            for row in range(rows):
+                result_set, product_line, series, FL_or_CR = self.findHBRowsForRecalculatedValues(row, table, HB_table)
+                if self.checkRelevantHBQuantityInHBTable(HB_table, result_set, product_line, series, FL_or_CR):
+                    head_sizes_list, base_sizes_list = self.getHeadAndBaseSizesFromHBTable(result_set, HB_table)
+                    self.recalculateCurrentRowHousingLengthsValues(table, row, head_sizes_list, base_sizes_list)
+        self.blockUneditableTablesVals()
+        #print(self.incorrect_HB_data)
+        self.showIncorrectDataInHBTable(self.incorrect_HB_data)
+
+    def findHBRowsForRecalculatedValues(self, row, table, HB_table):
+        '''Finds all rows in HB tables for current product_line, series and FL_or_CR'''
+
+        product_line = table.item(row, 0).text()
+        series = table.item(row, 1).text()
+        FL_or_CR = table.item(row, 2).text()
+
+        find_series_in_HB = HB_table.findItems(series, QtCore.Qt.MatchExactly)
+        find_product_line_in_HB = HB_table.findItems(product_line, QtCore.Qt.MatchExactly)
+        find_FL_or_CR_in_HB = HB_table.findItems(FL_or_CR, QtCore.Qt.MatchExactly)
+
+        find_series_in_HB_set = set()
+        find_product_line_in_HB_set = set()
+        find_FL_or_CR_in_HB_set = set()
+
+        for element in find_series_in_HB:
+            find_series_in_HB_set.add(element.row())
+
+        for element in find_product_line_in_HB:
+            find_product_line_in_HB_set.add(element.row())
+
+        for element in find_FL_or_CR_in_HB:
+            find_FL_or_CR_in_HB_set.add(element.row())
+        # find_series_in_HB_set = set(tuple(find_series_in_HB)) #Почему не работает?
+        return find_series_in_HB_set & find_product_line_in_HB_set & find_FL_or_CR_in_HB_set,\
+               product_line, series, FL_or_CR
+
+    def recalculateCurrentRowHousingLengthsValues(self, table, row, head_sizes_list, base_sizes_list):
+        '''Recalculates min, max and nominal work length of the housing in the table "table" at row "row"'''
+        head_size_nom = float(head_sizes_list[0])
+        head_size_up_dev = float(head_sizes_list[1])
+        head_size_low_dev = float(head_sizes_list[2])
+
+        base_size_nom = float(base_sizes_list[0])
+        base_size_up_dev = float(base_sizes_list[1])
+        base_size_low_dev = float(base_sizes_list[2])
+
+        hosing_size_up_dev = float(table.item(row, 5).text())
+        hosing_size_low_dev = float(table.item(row, 6).text())
+
+        work_housing_len_nom = round(float(table.item(row, 4).text())
+                                     - head_size_nom
+                                     - base_size_nom
+                                     , 3
+                                     )
+        work_housing_len_max = round(work_housing_len_nom
+                                     + hosing_size_up_dev
+                                     + base_size_low_dev
+                                     + head_size_low_dev
+                                     , 3
+                                     )
+        work_housing_len_min = round(work_housing_len_nom
+                                     - hosing_size_low_dev
+                                     - base_size_up_dev
+                                     - head_size_up_dev
+                                     , 3
+                                     )
+
+        item = table.setItem(row, 7, QtWidgets.QTableWidgetItem(str(work_housing_len_nom)))
+        item = table.item(row, 7)
+        item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+
+        item = table.setItem(row, 8, QtWidgets.QTableWidgetItem(str(work_housing_len_max)))
+        item = table.item(row, 8)
+        item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+
+        item = table.setItem(row, 9, QtWidgets.QTableWidgetItem(str(work_housing_len_min)))
+        item = table.item(row, 9)
+        item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+
+    def getHeadAndBaseSizesFromHBTable(self, result_set, HB_table):
+        ''' This method gets size, up_dev and low_dev for head and base in HB_table with row_ids written in result_set'''
+        head_sizes_list = []
+        base_sizes_list = []
+
+        res_list = list(result_set)
+
+        if HB_table.item(res_list[0], 2).text() == 'Голова':
+           head_sizes_list.extend((HB_table.item(res_list[0], 4).text(), HB_table.item(res_list[0], 5).text(), HB_table.item(res_list[0], 6).text()))
+           base_sizes_list.extend((HB_table.item(res_list[1], 4).text(), HB_table.item(res_list[1], 5).text(), HB_table.item(res_list[1], 6).text()))
+        else:
+            base_sizes_list.extend((HB_table.item(res_list[0], 4).text(), HB_table.item(res_list[0], 5).text(), HB_table.item(res_list[0], 6).text()))
+            head_sizes_list.extend((HB_table.item(res_list[1], 4).text(), HB_table.item(res_list[1], 5).text(), HB_table.item(res_list[1], 6).text()))
+        return head_sizes_list, base_sizes_list
+
+    def showIncorrectDataInHBTable(self, incorrect_HB_data):
+        '''This method is responsible for showing pop-up window describing incorrect data in HB tables
+        Invokes window after window for all PL where mistakes were found.
+        It's more likely to make it more user-friendly'''
+        for PL_type in incorrect_HB_data:
+            dialog = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning,
+                                           f"Ошибка в таблице {PL_type}",
+                                           f'Ошибка в таблице Концевые Детали {PL_type}!\n {str(incorrect_HB_data[PL_type])}',
+                                           buttons=QtWidgets.QMessageBox.Ok,
+                                           parent=self)
+            dialog.exec_()
+
+    def checkRelevantHBQuantityInHBTable(self, HB_table, evaluated_set, product_line, series, FL_or_CR):
+        '''Checks if there are only 1 Head and 1 Base suitable for current PL, series and FL_CR
+        if no - returns False and save mistake info in self.incorrect_HB_data dict'''
+        set_length = len(evaluated_set)
+        evaluated_list = list(evaluated_set)
+        if set_length < 2:
+            self.incorrect_HB_data.setdefault(product_line, []).append((series, FL_or_CR, set_length, 'missing'))
+            return False
+
+        elif set_length > 2:
+            self.incorrect_HB_data.setdefault(product_line, []).append((series, FL_or_CR, set_length, 'more'))
+            return False
+
+        else: #len=2
+            if HB_table.item(evaluated_list[0], 2).text() == HB_table.item(evaluated_list[1], 2).text():
+                self.incorrect_HB_data.setdefault(product_line, []).append((series, FL_or_CR, set_length, 'multiple'))
+                return False
+            else:
+                return True
+
     def calculateAndBlockUneditableMTHousingTableValues(self):
         '''This method performs calculation of MT housings working length and blocks calculated
          values for edit even for cheif technologist
@@ -397,6 +539,15 @@ class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, Q
             item = self.ui.tableWidgetMTHousing.setItem(row, 9, QtWidgets.QTableWidgetItem(str(work_housing_len_min)))
             item = self.ui.tableWidgetMTHousing.item(row, 9)
             item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+
+    def blockUneditableTablesVals(self):
+        '''This method blocks all calculated values, thus even ChiefTechnologist can't change them directly'''
+        for table in self.all_tables[0::5]: #Only housning tables
+            rows = table.rowCount()
+            for row in range(rows):
+                for col_id in (4, 7, 8, 9):
+                    item = table.item(row, col_id)
+                    item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
     def disableTablesIfNotChiefTech(self):
         '''This method blocks TableWidgets and hides some buttons
@@ -601,27 +752,43 @@ class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, Q
                 self.ui.tableWidgetMTHousing.setItem(row, col, QtWidgets.QTableWidgetItem(str(xl.iloc[row][col])))
         self.calculateAndBlockUneditableMTHousingTableValues()
 
-    def btnSaveChangesClicked(self):
-        '''This method should save all changes to the memory'''
+    def clearTablesData(self):
+        '''Clears all tableWidgets content'''
         for table in self.all_tables:
-            data_name = str(table.objectName())[11:]
-            rows = table.rowCount()
-            cols = table.columnCount()
-            print(rows, cols, data_name)
+            table.clearContents()
+
+    def loadTablesData(self):
+        '''loads tables data from the disk to tableWidgets'''
+        for table in self.all_tables:
+            excel_sheet_name = str(table.objectName())[11:]  # RegEx?
+            xl = pd.read_excel('./Data.xlsx', sheet_name=excel_sheet_name, header=0, index_col=0)
+            rows, cols = xl.shape
+            table.setRowCount(rows)
             for row in range(rows):
                 for col in range(cols):
-                    print(row, col, table.item(row, col).text())
+                    table.setItem(row, col, QtWidgets.QTableWidgetItem(str(xl.iloc[row][col])))
 
+    def btnSaveChangesClicked(self):
+        '''This method should save all changes to the memory'''
+        print('Saving your data')
+        #Перезаписывает таблицы с нуля. Нужно подумать над частичной перезаписью
+        #Возможно стоит отмечать каким-то цветом измененные поля, собирать данные об измененной ячейке
+        #в формате table_name, row, col и осуществлять перезапись в файл чисто по собранным данным
+        with pd.ExcelWriter('./Data.xlsx') as writer:
+            for table in self.all_tables:
+                excel_sheet_name = str(table.objectName())[11:] #RegEx?
+                rows = table.rowCount()
+                cols = table.columnCount()
+                table_values=[]
+                for row in range(rows):
+                    col_vals=[]
+                    for col in range(cols):
+                        col_vals.append(table.item(row, col).text())
+                    table_values.append(col_vals)
+                table_df = pd.DataFrame(table_values)
+                table_df.to_excel(writer, sheet_name=excel_sheet_name)
+        print('Your data saved successfully')
 
-    # def showMainWindow(self):
-    #     self.ui = MainWindow()
-    #     self.ui.show()
-    #     self.ui.MainWindow()
-
-    # def test_func(self):
-    #     print('herer')
-    #     x = self.ui.tableWidgetMTHousing.rowCount()
-    #     print(x)
     def addNewRow(self, table):
         '''This method add new empty row to the "table"'''
         row_position = table.rowCount()
