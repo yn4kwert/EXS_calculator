@@ -263,7 +263,7 @@ class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, Q
 
         self.ui.labelCurrentUser.setText(user)
         self.expandColumnsWidth()
-        self.clearTablesData() #after self.expandColumnsWidth!
+        #self.clearTablesData() #after self.expandColumnsWidth!
         self.loadTablesData()
         '''UNCOMMENT THIS when releasing the program
         vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv'''
@@ -278,7 +278,6 @@ class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, Q
 
         self.ui.pushButtonSaveChanges.clicked.connect(self.btnSaveChangesClicked)
         self.ui.pushButtonAddItem.clicked.connect(self.showAddNewItemWindow)
-        self.calculateAndBlockUneditableMTHousingTableValues()
         self.ui.TestButton.clicked.connect(self.blockUneditableTablesVals)
 
         self.setupHideButtons()
@@ -379,9 +378,24 @@ class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, Q
                 if self.checkRelevantHBQuantityInHBTable(HB_table, result_set, product_line, series, FL_or_CR):
                     head_sizes_list, base_sizes_list = self.getHeadAndBaseSizesFromHBTable(result_set, HB_table)
                     self.recalculateCurrentRowHousingLengthsValues(table, row, head_sizes_list, base_sizes_list)
+                else:
+                    self.putWorkLengthValuesInHousingTablesAndBlock(table, row)
         self.blockUneditableTablesVals()
         #print(self.incorrect_HB_data)
         self.showIncorrectDataInHBTable(self.incorrect_HB_data)
+
+    def putWorkLengthValuesInHousingTablesAndBlock(self, table, row, nom_len='-1', max_len='-1', min_len='-1'):
+        item = table.setItem(row, 7, QtWidgets.QTableWidgetItem(nom_len))
+        item = table.item(row, 7)
+        item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+
+        item = table.setItem(row, 8, QtWidgets.QTableWidgetItem(max_len))
+        item = table.item(row, 8)
+        item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+
+        item = table.setItem(row, 9, QtWidgets.QTableWidgetItem(min_len))
+        item = table.item(row, 9)
+        item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
     def findHBRowsForRecalculatedValues(self, row, table, HB_table):
         '''Finds all rows in HB tables for current product_line, series and FL_or_CR'''
@@ -440,18 +454,18 @@ class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, Q
                                      - head_size_up_dev
                                      , 3
                                      )
-
-        item = table.setItem(row, 7, QtWidgets.QTableWidgetItem(str(work_housing_len_nom)))
-        item = table.item(row, 7)
-        item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-
-        item = table.setItem(row, 8, QtWidgets.QTableWidgetItem(str(work_housing_len_max)))
-        item = table.item(row, 8)
-        item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-
-        item = table.setItem(row, 9, QtWidgets.QTableWidgetItem(str(work_housing_len_min)))
-        item = table.item(row, 9)
-        item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        self.putWorkLengthValuesInHousingTablesAndBlock(table, row, str(work_housing_len_nom), str(work_housing_len_max), str(work_housing_len_min))
+        # item = table.setItem(row, 7, QtWidgets.QTableWidgetItem(str(work_housing_len_nom)))
+        # item = table.item(row, 7)
+        # item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        #
+        # item = table.setItem(row, 8, QtWidgets.QTableWidgetItem(str(work_housing_len_max)))
+        # item = table.item(row, 8)
+        # item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        #
+        # item = table.setItem(row, 9, QtWidgets.QTableWidgetItem(str(work_housing_len_min)))
+        # item = table.item(row, 9)
+        # item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
     def getHeadAndBaseSizesFromHBTable(self, result_set, HB_table):
         ''' This method gets size, up_dev and low_dev for head and base in HB_table with row_ids written in result_set'''
@@ -500,54 +514,18 @@ class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, Q
             else:
                 return True
 
-    def calculateAndBlockUneditableMTHousingTableValues(self):
-        '''This method performs calculation of MT housings working length and blocks calculated
-         values for edit even for cheif technologist
-         NEED TO CORRECT THIS METHOD'''
-        rows = self.ui.tableWidgetMTHousing.rowCount()
-        #print(rows)
-        for row in range(rows):
-            work_housing_len_nom = round(
-                                        float(self.ui.tableWidgetMTHousing.item(row, 4).text())
-                                        - MT5A_FL_HEAD_LEN
-                                        - MT5A_FL_BASE_LEN
-                                        , 3)
-            #print(work_housing_len_nom)
-            work_housing_len_max = round(
-                                        float(self.ui.tableWidgetMTHousing.item(row, 4).text())
-                                        + float(self.ui.tableWidgetMTHousing.item(row, 5).text())
-                                        - (MT5A_FL_HEAD_LEN - MT5A_FL_HEAD_LEN_LOW_DEV)
-                                        - (MT5A_FL_BASE_LEN - MT5A_FL_BASE_LEN_LOW_DEV)
-                                        , 3)
-            #print(work_housing_len_max)
-            work_housing_len_min = round(
-                                        float(self.ui.tableWidgetMTHousing.item(row, 4).text())
-                                        - float(self.ui.tableWidgetMTHousing.item(row, 6).text())
-                                        - (MT5A_FL_HEAD_LEN + MT5A_FL_HEAD_LEN_LOW_DEV)
-                                        - (MT5A_FL_BASE_LEN + MT5A_FL_BASE_LEN_LOW_DEV)
-                                        , 3)
-            #print(work_housing_len_min)
-
-            item = self.ui.tableWidgetMTHousing.setItem(row, 7, QtWidgets.QTableWidgetItem(str(work_housing_len_nom)))
-            item = self.ui.tableWidgetMTHousing.item(row, 7)
-            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-
-            item = self.ui.tableWidgetMTHousing.setItem(row, 8, QtWidgets.QTableWidgetItem(str(work_housing_len_max)))
-            item = self.ui.tableWidgetMTHousing.item(row, 8)
-            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-
-            item = self.ui.tableWidgetMTHousing.setItem(row, 9, QtWidgets.QTableWidgetItem(str(work_housing_len_min)))
-            item = self.ui.tableWidgetMTHousing.item(row, 9)
-            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-
     def blockUneditableTablesVals(self):
         '''This method blocks all calculated values, thus even ChiefTechnologist can't change them directly'''
+
         for table in self.all_tables[0::5]: #Only housning tables
             rows = table.rowCount()
             for row in range(rows):
+
                 for col_id in (4, 7, 8, 9):
                     item = table.item(row, col_id)
                     item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+                print(f'{row} succes')
+                break
 
     def disableTablesIfNotChiefTech(self):
         '''This method blocks TableWidgets and hides some buttons
@@ -750,7 +728,7 @@ class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, Q
         for row in range(rows):
             for col in range(cols):
                 self.ui.tableWidgetMTHousing.setItem(row, col, QtWidgets.QTableWidgetItem(str(xl.iloc[row][col])))
-        self.calculateAndBlockUneditableMTHousingTableValues()
+        #self.calculateAndBlockUneditableMTHousingTableValues()
 
     def clearTablesData(self):
         '''Clears all tableWidgets content'''
@@ -759,18 +737,22 @@ class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, Q
 
     def loadTablesData(self):
         '''loads tables data from the disk to tableWidgets'''
-        for table in self.all_tables:
-            excel_sheet_name = str(table.objectName())[11:]  # RegEx?
-            xl = pd.read_excel('./Data.xlsx', sheet_name=excel_sheet_name, header=0, index_col=0)
-            rows, cols = xl.shape
-            table.setRowCount(rows)
-            for row in range(rows):
-                for col in range(cols):
-                    table.setItem(row, col, QtWidgets.QTableWidgetItem(str(xl.iloc[row][col])))
+        try:
+            for table in self.all_tables:
+                excel_sheet_name = str(table.objectName())[11:]  # RegEx?
+                xl = pd.read_excel('./Data.xlsx', sheet_name=excel_sheet_name, header=0, index_col=0)
+                rows, cols = xl.shape
+                table.setRowCount(rows)
+                for row in range(rows):
+                    for col in range(cols):
+                        table.setItem(row, col, QtWidgets.QTableWidgetItem(str(xl.iloc[row][col])))
+        except Exception:
+            print('No or wrong Data!')
 
     def btnSaveChangesClicked(self):
         '''This method should save all changes to the memory'''
         print('Saving your data')
+        missing_data_presist = False
         #Перезаписывает таблицы с нуля. Нужно подумать над частичной перезаписью
         #Возможно стоит отмечать каким-то цветом измененные поля, собирать данные об измененной ячейке
         #в формате table_name, row, col и осуществлять перезапись в файл чисто по собранным данным
@@ -779,14 +761,44 @@ class ConstantWindow(QtWidgets.QMainWindow): #class ConstantWindow(MainWindow, Q
                 excel_sheet_name = str(table.objectName())[11:] #RegEx?
                 rows = table.rowCount()
                 cols = table.columnCount()
-                table_values=[]
+                table_values = []
                 for row in range(rows):
-                    col_vals=[]
+                    col_vals = []
                     for col in range(cols):
-                        col_vals.append(table.item(row, col).text())
+                        try:
+                            col_vals.append(table.item(row, col).text())
+                        except Exception:
+                            missing_data_presist = True
+                            col_vals.append('-1')
                     table_values.append(col_vals)
                 table_df = pd.DataFrame(table_values)
                 table_df.to_excel(writer, sheet_name=excel_sheet_name)
+        if missing_data_presist:
+            print('Missing data were found and replaced with \'-1\' value!\n Data were saved')
+        else:
+            print('Your data saved successfully')
+
+    def btnSaveChangesClicked_TEST(self):
+        '''This method should save all changes to the memory'''
+        print('Saving your data')
+        #Перезаписывает таблицы с нуля. Нужно подумать над частичной перезаписью
+        #Возможно стоит отмечать каким-то цветом измененные поля, собирать данные об измененной ячейке
+        #в формате table_name, row, col и осуществлять перезапись в файл чисто по собранным данным
+
+        for table in self.all_tables:
+            rows = table.rowCount()
+            cols = table.columnCount()
+            table_values = []
+            for row in range(rows):
+                col_vals = []
+                for col in range(cols):
+                    try:
+                        col_vals.append(table.item(row, col).text())
+                    except Exception:
+                        print('empty?', row, col)
+                table_values.append(col_vals)
+
+            print(table_values)
         print('Your data saved successfully')
 
     def addNewRow(self, table):

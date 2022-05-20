@@ -15,7 +15,7 @@ class Ui_DialogCreateNewItem(object):
     def setupUi(self, DialogCreateNewItem):
         DialogCreateNewItem.setObjectName("DialogCreateNewItem")
         DialogCreateNewItem.setWindowModality(QtCore.Qt.ApplicationModal)
-        DialogCreateNewItem.resize(896, 667)
+        DialogCreateNewItem.resize(896, 670)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
